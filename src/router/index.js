@@ -9,7 +9,7 @@ const router = createRouter({
       component: HomeComponent
     },
     {
-      path: '/about',
+      path: '/second-component',
       component: () => import('../components/SecondComponent.vue')
     }
   ]

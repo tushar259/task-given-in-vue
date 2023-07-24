@@ -30,7 +30,49 @@
         </div>
         <div v-else-if="activeLink == 'step2'">
             <div style="height: 40px;"></div>
+            <div class="form-group">
+                <label>Project name</label>
+                <input type="text" class="form-control" v-model="firstStepForm.projectName" disabled>
+            </div>
+            <div class="form-group">
+                <label>Project description</label>
+                <input type="text" class="form-control" v-model="firstStepForm.projectDesc" disabled>
+            </div>
+            <div class="form-group">
+                <label>Client</label>
+                <input type="text" class="form-control" v-model="firstStepForm.client" disabled>
+            </div>
+            <div class="form-group">
+                <label>Contractor</label>
+                <input type="text" class="form-control" v-model="firstStepForm.contractor" disabled>
+            </div>
             
+            <input type="file" @change="handleFileUpload" accept=".csv" />
+            <div>
+                
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Column</th>
+                            <th>Max value</th>
+                            <th>Min value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="(columnData, columnName) in maxMinValues" :key="columnName">
+                            <td v-if="columnName != 'KP'">{{columnName}}</td>
+                            <td v-if="columnName != 'KP'"><input type="text" class="form-control" v-model="columnData.max" placeholder="Max value"></td>
+                            <td v-if="columnName != 'KP'"><input type="text" class="form-control" v-model="columnData.min" placeholder="Min value"></td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+            </div>
+            <div style="height: 40px;"></div>
+            <div class="button-container">
+                <button type="button" class="btn btn-secondary" @click="activeLink = 'step1'">Back</button>
+                <button type="button" class="btn btn-primary" @click="submitSecondStep()">Next</button>
+            </div>
         </div>
     </div>
 </template>
@@ -44,8 +86,16 @@
                     projectName: localStorage.getItem("projectName"),
                     projectDesc: localStorage.getItem("projectDesc"),
                     client: localStorage.getItem("client"),
-                    contractor: localStorage.getItem("contractor")
-                }
+                    contractor: localStorage.getItem("contractor"),
+                    
+                },
+                csvData: [],
+                maxMinValues: {
+                    X: { max: '', min: '' },
+                    Y: { max: '', min: '' },
+                    Z: { max: '', min: '' },
+                },
+
             }
         },
 
@@ -62,6 +112,53 @@
                     localStorage.setItem("contractor", this.firstStepForm.contractor);
                     this.activeLink = 'step2';
                 }
+            },
+
+            handleFileUpload(event) {
+                const file = event.target.files[0];
+                const reader = new FileReader();
+
+                reader.onload = (e) => {
+                    const content = e.target.result;
+                    const rows = content.split(/\r\n|\n/);
+                    this.csvData = rows;
+                    this.calculateMaxMinValues(rows);
+                };
+
+                reader.readAsText(file);
+            },
+            
+            calculateMaxMinValues(rows) {
+                const headerRow = rows.shift().split(',');
+                const columnValues = {};
+
+                headerRow.forEach((columnName) => {
+                    columnValues[columnName] = {
+                        max: Number.MIN_SAFE_INTEGER,
+                        min: Number.MAX_SAFE_INTEGER,
+                    };
+                });
+
+                rows.forEach((row) => {
+                    const values = row.split(',');
+
+                    headerRow.forEach((columnName, index) => {
+                        const value = Number(values[index]);
+                        if (!isNaN(value)) {
+                            columnValues[columnName].max = Math.max(columnValues[columnName].max, value);
+                            columnValues[columnName].min = Math.min(columnValues[columnName].min, value);
+                        }
+                    });
+                });
+
+                this.maxMinValues = columnValues;
+                // console.log("this.maxMinValues: ", this.maxMinValues.KP.min);
+            },
+
+            submitSecondStep(){
+                const maxMinValuesJson = JSON.stringify(this.maxMinValues);
+                localStorage.setItem('maxMinValues', maxMinValuesJson);
+                this.$router.push("/second-component");
             }
         }
     }
