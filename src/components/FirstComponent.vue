@@ -75,6 +75,7 @@
             <div class="button-container">
                 <button type="button" class="btn btn-secondary" @click="activeLink = 'step1'">Back</button>
                 <button type="button" class="btn btn-primary" @click="submitSecondStep()">Next</button>
+                <button @click="refreshPage()">Refresh Page</button>
             </div>
         </div>
     </div>
@@ -201,6 +202,10 @@
                         },
                     },
                 });
+            },
+
+            refreshPage() {
+                window.location.reload();
             },
         },
 
