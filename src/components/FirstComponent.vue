@@ -68,6 +68,9 @@
                 </table>
                 
             </div>
+            <div>
+                <canvas ref="chartCanvas"></canvas>
+            </div>
             <div style="height: 40px;"></div>
             <div class="button-container">
                 <button type="button" class="btn btn-secondary" @click="activeLink = 'step1'">Back</button>
@@ -78,6 +81,8 @@
 </template>
 
 <script>
+    import { Chart, registerables } from 'chart.js';
+    Chart.register(...registerables);
     export default{
         data(){
             return{
@@ -95,6 +100,7 @@
                     Y: { max: '', min: '' },
                     Z: { max: '', min: '' },
                 },
+                chart: null,
 
             }
         },
@@ -152,14 +158,58 @@
                 });
 
                 this.maxMinValues = columnValues;
-                // console.log("this.maxMinValues: ", this.maxMinValues.KP.min);
             },
 
             submitSecondStep(){
                 const maxMinValuesJson = JSON.stringify(this.maxMinValues);
                 localStorage.setItem('maxMinValues', maxMinValuesJson);
                 this.$router.push("/second-component");
-            }
-        }
+            },
+
+            createChart() {
+                const chartCanvas = this.$refs.chartCanvas;
+                const labels = this.csvData.map((row) => {
+                    const values = row.split(',');
+                    return values[0]; 
+                });
+                const data = this.csvData.map((row) => {
+                    const values = row.split(',');
+                    return values[1]; 
+                });
+
+                this.chart = new Chart(chartCanvas, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'X Values',
+                                data: data,
+                                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                borderWidth: 1,
+                            },
+                        ],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                            },
+                        },
+                    },
+                });
+            },
+        },
+
+        watch: {
+            csvData() {
+                if (this.csvData.length > 0) {
+                    this.createChart();
+                }
+            },
+        },
     }
 </script>
